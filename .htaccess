@@ -1,0 +1,11 @@
+# Enable rewrite engine
+RewriteEngine On
+
+# Redirect to admin login if accessing root
+RewriteCond %{REQUEST_URI} ^/dhama/?$
+RewriteRule ^$ admin/login.php [L]
+
+# API routing
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^api/(.*)$ api/index.php?path=$1 [QSA,L]
