@@ -75,7 +75,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">စုစည်းမှု</h2>
-                    <p class="section-subtitle">ဗုဒံ ဓမ္မံ သံဃံ </p>
+                    <p class="section-subtitle">ဗုဒ္ဓံ ဓမ္မံ သံဃံ </p>
                 </div>
                 <div class="artists-grid" id="artists-container">
                     <div class="loading">ရှာဖွေနေသည်..</div>
@@ -88,7 +88,7 @@
             <div class="container">
                 <div class="section-header">
                     <h2 class="section-title">တရားများ</h2>
-                    <p class="section-subtitle">ဗုဒံ ဓမ္မံ သံဃံ </p>
+                    <p class="section-subtitle">ဗုဒ္ဓံ ဓမ္မံ သံဃံ </p>
                 </div>
                 <div class="songs-grid" id="all-songs">
                     <div class="loading">ရှာဖွေနေသည်..</div>
