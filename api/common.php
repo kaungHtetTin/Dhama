@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../config/config.php';
+require_once '../config/upload.php';
 
 // Response helper
 function sendResponse($data, $status = 200) {
@@ -25,4 +26,29 @@ function sendResponse($data, $status = 200) {
 
 function sendError($message, $status = 400) {
     sendResponse(['error' => $message], $status);
+}
+
+// Get JSON input
+function getJsonInput() {
+    $json = file_get_contents('php://input');
+    return json_decode($json, true);
+}
+
+// Get request data (supports both JSON and form data)
+function getRequestData() {
+    $method = $_SERVER['REQUEST_METHOD'];
+    
+    if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH') {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        
+        // Check if JSON
+        if (strpos($contentType, 'application/json') !== false) {
+            return getJsonInput();
+        }
+        
+        // Otherwise return POST data
+        return $_POST;
+    }
+    
+    return [];
 }

@@ -21,7 +21,7 @@ const getBasePath = () => {
             return '/dhama/';
         }
     }
-    return "http://localhost"+basePath;
+    return "https://www.calamuseducation.com"+basePath;
 };
 
 const API_BASE = getBasePath() + 'api/';

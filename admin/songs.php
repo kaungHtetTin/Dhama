@@ -304,6 +304,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                     <span class="nav-item-icon">🎵</span>
                     Songs
                 </a>
+                <a href="bulk_upload.php" class="nav-item">
+                    <span class="nav-item-icon">📤</span>
+                    Bulk Upload
+                </a>
                 <a href="categories.php" class="nav-item">
                     <span class="nav-item-icon">📁</span>
                     Categories
@@ -340,7 +344,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                         <p class="page-subtitle"><?php echo $edit_song ? 'Update song information' : 'Manage your songs and podcasts'; ?></p>
                     </div>
                     <?php if (!$edit_song): ?>
-                        <button onclick="showForm()" class="btn btn-primary">+ Add Song</button>
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="showForm()" class="btn btn-primary">+ Add Song</button>
+                            <a href="bulk_upload.php" class="btn btn-secondary">📤 Bulk Upload</a>
+                        </div>
                     <?php endif; ?>
                 </div>
 
@@ -389,7 +396,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                         <label for="audio_file" class="file-input-label">
                                             <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 50MB)</span>
                                         </label>
-                                        <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a" class="file-input" onchange="previewAudio(this)">
+                                        <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4,audio/x-m4a" class="file-input" onchange="previewAudio(this)">
                                     </div>
                                     <div class="file-preview" id="audio-preview" onclick="event.stopPropagation()"></div>
                                 </div>
@@ -457,7 +464,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                         <label for="audio_file" class="file-input-label">
                                             <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 50MB)</span>
                                         </label>
-                                        <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a" class="file-input" onchange="previewAudio(this)">
+                                        <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4,audio/x-m4a" class="file-input" onchange="previewAudio(this)">
                                     </div>
                                     <div class="file-preview" id="audio-preview" onclick="event.stopPropagation()"></div>
                                 </div>

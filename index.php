@@ -26,7 +26,7 @@
                 <div class="nav-links">
                     <a href="#home" class="nav-link active" data-section="home">မူလစာမျက်နှာ</a>
                     <a href="#player" class="nav-link" data-section="player">ဖွင့်ရန်</a>
-                    <a href="#artists" class="nav-link" data-section="artists">ဆရာတော်ကြီးများ</a>
+                    <a href="#artists" class="nav-link" data-section="artists">စုစည်းမှု</a>
                     <a href="#songs" class="nav-link" data-section="songs">တရားများ</a>
                 </div>
                 <div class="nav-search">
@@ -74,7 +74,7 @@
         <section id="artists" class="section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">ဆရာတော်ကြီးများ</h2>
+                    <h2 class="section-title">စုစည်းမှု</h2>
                     <p class="section-subtitle">ဗုဒံ ဓမ္မံ သံဃံ </p>
                 </div>
                 <div class="artists-grid" id="artists-container">
@@ -107,7 +107,7 @@
                     <div class="player-page-left">
                         <div class="player-page-card">
                             <div class="player-page-header">
-                                <h3 class="player-page-subtitle">ဆရာတော်ကြီးများ</h3>
+                                <h3 class="player-page-subtitle">စုစည်းမှု</h3>
                                 <button class="player-page-toggle-btn" id="artist-card-toggle" title="Collapse/Expand">
                                     <i class="fas fa-chevron-up"></i>
                                 </button>

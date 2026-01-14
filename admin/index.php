@@ -61,6 +61,10 @@ $recent_songs = $conn->query("
                     <span class="nav-item-icon">🎵</span>
                     Songs
                 </a>
+                <a href="bulk_upload.php" class="nav-item">
+                    <span class="nav-item-icon">📤</span>
+                    Bulk Upload
+                </a>
                 <a href="categories.php" class="nav-item">
                     <span class="nav-item-icon">📁</span>
                     Categories

@@ -24,7 +24,7 @@ function uploadFile($file, $type = 'image', $subfolder = '') {
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $uploadDir = UPLOAD_DIR . 'images/';
     } elseif ($type === 'audio') {
-        $allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a'];
+        $allowedTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/mp4', 'audio/x-m4a'];
         $allowedExtensions = ['mp3', 'wav', 'ogg', 'm4a'];
         $uploadDir = UPLOAD_DIR . 'audio/';
     } else {

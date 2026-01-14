@@ -300,6 +300,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                     <span class="nav-item-icon">🎵</span>
                     Songs
                 </a>
+                <a href="bulk_upload.php" class="nav-item">
+                    <span class="nav-item-icon">📤</span>
+                    Bulk Upload
+                </a>
                 <a href="categories.php" class="nav-item">
                     <span class="nav-item-icon">📁</span>
                     Categories
