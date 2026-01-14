@@ -16,7 +16,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Base URL
-define('BASE_URL', 'http://localhost/dhama/');
+define('BASE_URL', 'https://www.calamuseducation.com/dhama/');
 
 // Paths
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');

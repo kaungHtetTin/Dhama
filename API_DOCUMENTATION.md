@@ -28,6 +28,7 @@ The Dhama Podcast API is a RESTful JSON API that provides access to artists, son
 All API responses follow a consistent JSON format:
 
 ### Success Response
+
 ```json
 {
   "data": "...",
@@ -37,6 +38,7 @@ All API responses follow a consistent JSON format:
 ```
 
 ### Error Response
+
 ```json
 {
   "error": "Error message here"
@@ -71,6 +73,7 @@ Retrieve a list of all artists with their song counts.
 | `offset` | integer | No | 0 | Number of artists to skip |
 
 **Response:**
+
 ```json
 {
   "artists": [
@@ -90,6 +93,7 @@ Retrieve a list of all artists with their song counts.
 ```
 
 **Example Request:**
+
 ```
 GET /api/artists.php?limit=20&offset=0
 ```
@@ -108,6 +112,7 @@ Retrieve detailed information about a specific artist.
 | `id` | integer | Yes | Artist ID |
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -121,11 +126,13 @@ Retrieve detailed information about a specific artist.
 ```
 
 **Example Request:**
+
 ```
 GET /api/artists.php?id=1
 ```
 
 **Error Response (404):**
+
 ```json
 {
   "error": "Artist not found"
@@ -141,6 +148,7 @@ Create a new artist.
 **Endpoint:** `POST /api/artists.php`
 
 **Request Body (JSON):**
+
 ```json
 {
   "name": "Artist Name",
@@ -159,6 +167,7 @@ Create a new artist.
 | `image_url` | string | No | Image URL (alternative to file upload) |
 
 **Response (201 Created):**
+
 ```json
 {
   "id": 1,
@@ -174,8 +183,9 @@ Create a new artist.
 **Example Requests:**
 
 **JSON:**
+
 ```bash
-curl -X POST http://localhost/dhama/api/artists.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -H "Content-Type: application/json" \
   -d '{
     "name": "New Artist",
@@ -185,14 +195,16 @@ curl -X POST http://localhost/dhama/api/artists.php \
 ```
 
 **Multipart (with file upload):**
+
 ```bash
-curl -X POST http://localhost/dhama/api/artists.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -F "name=New Artist" \
   -F "bio=Artist biography" \
   -F "image=@/path/to/image.jpg"
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Name is required"
@@ -213,6 +225,7 @@ Update an existing artist.
 | `id` | integer | Yes | Artist ID |
 
 **Request Body (JSON):**
+
 ```json
 {
   "name": "Updated Artist Name",
@@ -231,6 +244,7 @@ Update an existing artist.
 | `image_url` | string | No | New image URL (replaces existing) |
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -244,8 +258,9 @@ Update an existing artist.
 ```
 
 **Example Request:**
+
 ```bash
-curl -X PUT http://localhost/dhama/api/artists.php?id=1 \
+curl -X PUT https://www.calamuseducation.com/dhama/api/artists.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Name",
@@ -254,6 +269,7 @@ curl -X PUT http://localhost/dhama/api/artists.php?id=1 \
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Artist not found"
@@ -274,6 +290,7 @@ Delete an artist and their associated image file.
 | `id` | integer | Yes | Artist ID |
 
 **Response:**
+
 ```json
 {
   "message": "Artist deleted successfully",
@@ -282,11 +299,13 @@ Delete an artist and their associated image file.
 ```
 
 **Example Request:**
+
 ```bash
-curl -X DELETE http://localhost/dhama/api/artists.php?id=1
+curl -X DELETE https://www.calamuseducation.com/dhama/api/artists.php?id=1
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Artist not found"
@@ -314,6 +333,7 @@ Retrieve a list of all songs with optional filtering and pagination.
 | `offset` | integer | No | 0 | Number of songs to skip |
 
 **Response:**
+
 ```json
 {
   "songs": [
@@ -340,6 +360,7 @@ Retrieve a list of all songs with optional filtering and pagination.
 ```
 
 **Example Requests:**
+
 ```
 GET /api/songs.php
 GET /api/songs.php?artist_id=1
@@ -362,6 +383,7 @@ Retrieve detailed information about a specific song. **Note:** This endpoint aut
 | `id` | integer | Yes | Song ID |
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -380,11 +402,13 @@ Retrieve detailed information about a specific song. **Note:** This endpoint aut
 ```
 
 **Example Request:**
+
 ```
 GET /api/songs.php?id=1
 ```
 
 **Error Response (404):**
+
 ```json
 {
   "error": "Song not found"
@@ -402,6 +426,7 @@ Create a new song.
 **Endpoint:** `POST /api/songs.php`
 
 **Request Body (JSON):**
+
 ```json
 {
   "title": "Song Title",
@@ -429,6 +454,7 @@ Create a new song.
 \* Either `audio` file or `audio_url` is required.
 
 **Response (201 Created):**
+
 ```json
 {
   "id": 1,
@@ -449,8 +475,9 @@ Create a new song.
 **Example Requests:**
 
 **JSON:**
+
 ```bash
-curl -X POST http://localhost/dhama/api/songs.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/songs.php \
   -H "Content-Type: application/json" \
   -d '{
     "title": "New Song",
@@ -462,8 +489,9 @@ curl -X POST http://localhost/dhama/api/songs.php \
 ```
 
 **Multipart (with file uploads):**
+
 ```bash
-curl -X POST http://localhost/dhama/api/songs.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/songs.php \
   -F "title=New Song" \
   -F "artist_id=1" \
   -F "description=Song description" \
@@ -473,21 +501,25 @@ curl -X POST http://localhost/dhama/api/songs.php \
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Title is required"
 }
 ```
+
 ```json
 {
   "error": "Valid artist_id is required"
 }
 ```
+
 ```json
 {
   "error": "Audio file or audio_url is required"
 }
 ```
+
 ```json
 {
   "error": "Artist not found"
@@ -508,6 +540,7 @@ Update an existing song.
 | `id` | integer | Yes | Song ID |
 
 **Request Body (JSON):**
+
 ```json
 {
   "title": "Updated Song Title",
@@ -533,6 +566,7 @@ Update an existing song.
 | `duration` | integer | No | Duration in seconds |
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -551,8 +585,9 @@ Update an existing song.
 ```
 
 **Example Request:**
+
 ```bash
-curl -X PUT http://localhost/dhama/api/songs.php?id=1 \
+curl -X PUT https://www.calamuseducation.com/dhama/api/songs.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Updated Title",
@@ -561,11 +596,13 @@ curl -X PUT http://localhost/dhama/api/songs.php?id=1 \
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Song not found"
 }
 ```
+
 ```json
 {
   "error": "Artist not found"
@@ -586,6 +623,7 @@ Delete a song and its associated audio and cover image files.
 | `id` | integer | Yes | Song ID |
 
 **Response:**
+
 ```json
 {
   "message": "Song deleted successfully",
@@ -594,11 +632,13 @@ Delete a song and its associated audio and cover image files.
 ```
 
 **Example Request:**
+
 ```bash
-curl -X DELETE http://localhost/dhama/api/songs.php?id=1
+curl -X DELETE https://www.calamuseducation.com/dhama/api/songs.php?id=1
 ```
 
 **Error Responses:**
+
 ```json
 {
   "error": "Song not found"
@@ -621,6 +661,7 @@ Retrieve the most popular songs based on play count, sorted by play count (desce
 | `limit` | integer | No | 10 | Maximum number of songs to return |
 
 **Response:**
+
 ```json
 {
   "songs": [
@@ -644,6 +685,7 @@ Retrieve the most popular songs based on play count, sorted by play count (desce
 ```
 
 **Example Request:**
+
 ```
 GET /api/featured.php?limit=20
 ```
@@ -659,6 +701,7 @@ Retrieve a list of all categories.
 **Endpoint:** `GET /api/categories.php` or `GET /api/?path=categories`
 
 **Response:**
+
 ```json
 {
   "categories": [
@@ -674,6 +717,7 @@ Retrieve a list of all categories.
 ```
 
 **Example Request:**
+
 ```
 GET /api/categories.php
 ```
@@ -689,6 +733,7 @@ Retrieve overall statistics about the podcast platform.
 **Endpoint:** `GET /api/stats.php` or `GET /api/?path=stats`
 
 **Response:**
+
 ```json
 {
   "total_artists": 10,
@@ -698,6 +743,7 @@ Retrieve overall statistics about the podcast platform.
 ```
 
 **Example Request:**
+
 ```
 GET /api/stats.php
 ```
@@ -713,6 +759,7 @@ Get information about the API and available endpoints.
 **Endpoint:** `GET /api/` or `GET /api/index.php`
 
 **Response:**
+
 ```json
 {
   "message": "Dhama Podcast API",
@@ -740,6 +787,7 @@ Get information about the API and available endpoints.
 ## Data Models
 
 ### Artist Object
+
 ```json
 {
   "id": 1,
@@ -753,6 +801,7 @@ Get information about the API and available endpoints.
 ```
 
 ### Song Object
+
 ```json
 {
   "id": 1,
@@ -771,6 +820,7 @@ Get information about the API and available endpoints.
 ```
 
 ### Category Object
+
 ```json
 {
   "id": 1,
@@ -800,145 +850,145 @@ Preflight OPTIONS requests are automatically handled.
 
 ```javascript
 // GET - Get all artists
-fetch('http://localhost/dhama/api/artists.php')
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch("https://www.calamuseducation.com/dhama/api/artists.php")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // GET - Get single artist
-fetch('http://localhost/dhama/api/artists.php?id=1')
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch("https://www.calamuseducation.com/dhama/api/artists.php?id=1")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // POST - Create artist (JSON)
-fetch('http://localhost/dhama/api/artists.php', {
-  method: 'POST',
+fetch("https://www.calamuseducation.com/dhama/api/artists.php", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    name: 'New Artist',
-    bio: 'Artist biography',
-    image_url: 'http://example.com/image.jpg'
-  })
+    name: "New Artist",
+    bio: "Artist biography",
+    image_url: "http://example.com/image.jpg",
+  }),
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // POST - Create artist (multipart/form-data with file)
 const formData = new FormData();
-formData.append('name', 'New Artist');
-formData.append('bio', 'Artist biography');
-formData.append('image', fileInput.files[0]);
+formData.append("name", "New Artist");
+formData.append("bio", "Artist biography");
+formData.append("image", fileInput.files[0]);
 
-fetch('http://localhost/dhama/api/artists.php', {
-  method: 'POST',
-  body: formData
+fetch("https://www.calamuseducation.com/dhama/api/artists.php", {
+  method: "POST",
+  body: formData,
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // PUT - Update artist
-fetch('http://localhost/dhama/api/artists.php?id=1', {
-  method: 'PUT',
+fetch("https://www.calamuseducation.com/dhama/api/artists.php?id=1", {
+  method: "PUT",
   headers: {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    name: 'Updated Name',
-    bio: 'Updated bio'
-  })
+    name: "Updated Name",
+    bio: "Updated bio",
+  }),
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // DELETE - Delete artist
-fetch('http://localhost/dhama/api/artists.php?id=1', {
-  method: 'DELETE'
+fetch("https://www.calamuseducation.com/dhama/api/artists.php?id=1", {
+  method: "DELETE",
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // GET - Get songs by artist
-fetch('http://localhost/dhama/api/songs.php?artist_id=1')
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch("https://www.calamuseducation.com/dhama/api/songs.php?artist_id=1")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // GET - Search songs
-fetch('http://localhost/dhama/api/songs.php?search=keyword')
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch("https://www.calamuseducation.com/dhama/api/songs.php?search=keyword")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // POST - Create song (JSON)
-fetch('http://localhost/dhama/api/songs.php', {
-  method: 'POST',
+fetch("https://www.calamuseducation.com/dhama/api/songs.php", {
+  method: "POST",
   headers: {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    title: 'New Song',
+    title: "New Song",
     artist_id: 1,
-    description: 'Song description',
-    audio_url: 'http://example.com/audio.mp3',
-    duration: 180
-  })
+    description: "Song description",
+    audio_url: "http://example.com/audio.mp3",
+    duration: 180,
+  }),
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // POST - Create song (multipart/form-data with files)
 const songFormData = new FormData();
-songFormData.append('title', 'New Song');
-songFormData.append('artist_id', '1');
-songFormData.append('description', 'Song description');
-songFormData.append('audio', audioInput.files[0]);
-songFormData.append('cover_image', coverInput.files[0]);
-songFormData.append('duration', '180');
+songFormData.append("title", "New Song");
+songFormData.append("artist_id", "1");
+songFormData.append("description", "Song description");
+songFormData.append("audio", audioInput.files[0]);
+songFormData.append("cover_image", coverInput.files[0]);
+songFormData.append("duration", "180");
 
-fetch('http://localhost/dhama/api/songs.php', {
-  method: 'POST',
-  body: songFormData
+fetch("https://www.calamuseducation.com/dhama/api/songs.php", {
+  method: "POST",
+  body: songFormData,
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // PUT - Update song
-fetch('http://localhost/dhama/api/songs.php?id=1', {
-  method: 'PUT',
+fetch("https://www.calamuseducation.com/dhama/api/songs.php?id=1", {
+  method: "PUT",
   headers: {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    title: 'Updated Title',
-    description: 'Updated description'
-  })
+    title: "Updated Title",
+    description: "Updated description",
+  }),
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // DELETE - Delete song
-fetch('http://localhost/dhama/api/songs.php?id=1', {
-  method: 'DELETE'
+fetch("https://www.calamuseducation.com/dhama/api/songs.php?id=1", {
+  method: "DELETE",
 })
-  .then(response => response.json())
-  .then(data => console.log(data));
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 
 // GET - Get featured songs
-fetch('http://localhost/dhama/api/featured.php?limit=10')
-  .then(response => response.json())
-  .then(data => console.log(data));
+fetch("https://www.calamuseducation.com/dhama/api/featured.php?limit=10")
+  .then((response) => response.json())
+  .then((data) => console.log(data));
 ```
 
 ### cURL
 
 ```bash
 # GET - Get all artists
-curl http://localhost/dhama/api/artists.php
+curl https://www.calamuseducation.com/dhama/api/artists.php
 
 # GET - Get single artist
-curl http://localhost/dhama/api/artists.php?id=1
+curl https://www.calamuseducation.com/dhama/api/artists.php?id=1
 
 # POST - Create artist (JSON)
-curl -X POST http://localhost/dhama/api/artists.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -H "Content-Type: application/json" \
   -d '{
     "name": "New Artist",
@@ -947,13 +997,13 @@ curl -X POST http://localhost/dhama/api/artists.php \
   }'
 
 # POST - Create artist (multipart/form-data with file)
-curl -X POST http://localhost/dhama/api/artists.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -F "name=New Artist" \
   -F "bio=Artist biography" \
   -F "image=@/path/to/image.jpg"
 
 # PUT - Update artist
-curl -X PUT http://localhost/dhama/api/artists.php?id=1 \
+curl -X PUT https://www.calamuseducation.com/dhama/api/artists.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Name",
@@ -961,16 +1011,16 @@ curl -X PUT http://localhost/dhama/api/artists.php?id=1 \
   }'
 
 # DELETE - Delete artist
-curl -X DELETE http://localhost/dhama/api/artists.php?id=1
+curl -X DELETE https://www.calamuseducation.com/dhama/api/artists.php?id=1
 
 # GET - Get all songs
-curl http://localhost/dhama/api/songs.php
+curl https://www.calamuseducation.com/dhama/api/songs.php
 
 # GET - Get songs with filters
-curl "http://localhost/dhama/api/songs.php?artist_id=1&search=keyword&limit=10"
+curl "https://www.calamuseducation.com/dhama/api/songs.php?artist_id=1&search=keyword&limit=10"
 
 # POST - Create song (JSON)
-curl -X POST http://localhost/dhama/api/songs.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/songs.php \
   -H "Content-Type: application/json" \
   -d '{
     "title": "New Song",
@@ -981,7 +1031,7 @@ curl -X POST http://localhost/dhama/api/songs.php \
   }'
 
 # POST - Create song (multipart/form-data with files)
-curl -X POST http://localhost/dhama/api/songs.php \
+curl -X POST https://www.calamuseducation.com/dhama/api/songs.php \
   -F "title=New Song" \
   -F "artist_id=1" \
   -F "description=Song description" \
@@ -990,7 +1040,7 @@ curl -X POST http://localhost/dhama/api/songs.php \
   -F "duration=180"
 
 # PUT - Update song
-curl -X PUT http://localhost/dhama/api/songs.php?id=1 \
+curl -X PUT https://www.calamuseducation.com/dhama/api/songs.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Updated Title",
@@ -998,13 +1048,13 @@ curl -X PUT http://localhost/dhama/api/songs.php?id=1 \
   }'
 
 # DELETE - Delete song
-curl -X DELETE http://localhost/dhama/api/songs.php?id=1
+curl -X DELETE https://www.calamuseducation.com/dhama/api/songs.php?id=1
 
 # GET - Get featured songs
-curl http://localhost/dhama/api/featured.php?limit=20
+curl https://www.calamuseducation.com/dhama/api/featured.php?limit=20
 
 # GET - Get statistics
-curl http://localhost/dhama/api/stats.php
+curl https://www.calamuseducation.com/dhama/api/stats.php
 ```
 
 ---
@@ -1014,12 +1064,14 @@ curl http://localhost/dhama/api/stats.php
 1. **Play Count Increment**: Accessing a single song via `GET /api/songs.php?id={id}` automatically increments the play count. This happens server-side and cannot be disabled.
 
 2. **Pagination**: When using pagination with `limit` and `offset`, the response includes:
+
    - `count`: Number of items in the current response
    - `total`: Total number of items available
    - `limit`: The limit used
    - `offset`: The offset used
 
 3. **Search**: The search parameter searches across:
+
    - Song title
    - Song description
    - Artist name
@@ -1028,7 +1080,8 @@ curl http://localhost/dhama/api/stats.php
 
 5. **File URLs**: All file URLs (images, audio) are relative paths. Prepend your base URL when constructing full URLs for client applications.
 
-6. **File Uploads**: 
+6. **File Uploads**:
+
    - **Image files**: Supported formats are JPG, PNG, GIF, WEBP. Maximum file size is 10MB. Images are automatically cropped to square (500x500px) for artists.
    - **Audio files**: Supported formats are MP3, WAV, OGG, M4A. Maximum file size is 50MB.
    - **Upload methods**: You can upload files using:
@@ -1038,6 +1091,7 @@ curl http://localhost/dhama/api/stats.php
    - When updating resources, providing a new file will replace the old one, and the old file will be automatically deleted.
 
 7. **Request Content Types**:
+
    - Use `application/json` for JSON requests (without file uploads)
    - Use `multipart/form-data` for requests with file uploads
    - The API automatically detects the content type and handles both formats
@@ -1049,6 +1103,7 @@ curl http://localhost/dhama/api/stats.php
 ## Support
 
 For issues or questions, please refer to:
+
 - `README.md` - General project documentation
 - `README_SETUP.md` - Setup instructions
 - `TROUBLESHOOTING.md` - Troubleshooting guide

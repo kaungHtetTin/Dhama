@@ -12,10 +12,12 @@ A mini podcast/song application built with pure PHP, featuring an admin console 
 ## Installation
 
 1. **Database Setup**
+
    - Import the database schema from `database/schema.sql` into your MySQL database
    - Update database credentials in `config/database.php` if needed
 
 2. **Configuration**
+
    - Default admin credentials:
      - Username: `admin`
      - Password: `admin123`
@@ -35,7 +37,7 @@ A mini podcast/song application built with pure PHP, featuring an admin console 
 
 ### Admin Console
 
-Access the admin console at: `http://localhost/dhama/admin/`
+Access the admin console at: `https://www.calamuseducation.com/dhama/admin/`
 
 - **Dashboard**: View statistics and recent songs
 - **Artists**: Manage artists (Create, Read, Update, Delete)
@@ -44,19 +46,22 @@ Access the admin console at: `http://localhost/dhama/admin/`
 
 ### API Endpoints
 
-Base URL: `http://localhost/dhama/api/`
+Base URL: `https://www.calamuseducation.com/dhama/api/`
 
 #### Get All Artists
+
 ```
 GET /api/?path=artists
 ```
 
 #### Get Single Artist
+
 ```
 GET /api/?path=artists/{id}
 ```
 
 #### Get All Songs
+
 ```
 GET /api/?path=songs
 GET /api/?path=songs?artist_id=1
@@ -65,22 +70,27 @@ GET /api/?path=songs?limit=20&offset=0
 ```
 
 #### Get Single Song
+
 ```
 GET /api/?path=songs/{id}
 ```
-*Note: This automatically increments the play count*
+
+_Note: This automatically increments the play count_
 
 #### Get Featured Songs
+
 ```
 GET /api/?path=featured?limit=10
 ```
 
 #### Get Categories
+
 ```
 GET /api/?path=categories
 ```
 
 #### Get Statistics
+
 ```
 GET /api/?path=stats
 ```
