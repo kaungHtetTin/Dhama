@@ -445,7 +445,7 @@ Create a new song.
 | `title` | string | Yes | Song title |
 | `artist_id` | integer | Yes | Artist ID |
 | `description` | string | No | Song description |
-| `audio` | file | Yes* | Audio file (MP3, WAV, OGG, M4A, max 50MB) |
+| `audio` | file | Yes* | Audio file (MP3, WAV, OGG, M4A, max 500MB) |
 | `audio_url` | string | Yes* | Audio URL (alternative to file upload) |
 | `cover_image` | file | No | Cover image file (JPG, PNG, GIF, WEBP, max 10MB) |
 | `cover_image_url` | string | No | Cover image URL |
@@ -1083,7 +1083,7 @@ curl https://www.calamuseducation.com/dhama/api/stats.php
 6. **File Uploads**:
 
    - **Image files**: Supported formats are JPG, PNG, GIF, WEBP. Maximum file size is 10MB. Images are automatically cropped to square (500x500px) for artists.
-   - **Audio files**: Supported formats are MP3, WAV, OGG, M4A. Maximum file size is 50MB.
+   - **Audio files**: Supported formats are MP3, WAV, OGG, M4A. Maximum file size is 500MB.
    - **Upload methods**: You can upload files using:
      - `multipart/form-data` with file field (e.g., `image` for artists, `audio` and `cover_image` for songs)
      - Base64 encoded strings in JSON (use `image_base64` or `cover_image_base64` fields)

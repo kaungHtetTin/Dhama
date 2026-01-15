@@ -54,8 +54,8 @@ function uploadFile($file, $type = 'image', $subfolder = '') {
         return false;
     }
     
-    // Check file size (10MB for images, 50MB for audio)
-    $maxSize = $type === 'image' ? 10 * 1024 * 1024 : 50 * 1024 * 1024;
+    // Check file size (10MB for images, 500MB for audio)
+    $maxSize = $type === 'image' ? 10 * 1024 * 1024 : 500 * 1024 * 1024;
     if ($file['size'] > $maxSize) {
         return false;
     }

@@ -300,7 +300,7 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
                                         <input type="file" id="audio_files" name="audio_files[]" multiple accept="audio/*" required>
                                         <div>
                                             <strong>Click to select files</strong> or drag and drop<br>
-                                            <span style="font-size: 12px; color: var(--text-secondary);">Supported: MP3, WAV, OGG, M4A (max 50MB each)</span>
+                                            <span style="font-size: 12px; color: var(--text-secondary);">Supported: MP3, WAV, OGG, M4A (max 500MB each)</span>
                                         </div>
                                     </label>
                                 </div>

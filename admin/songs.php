@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploaded_url) {
                 $audio_url = $uploaded_url;
             } else {
-                $message = 'Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 50MB)';
+                $message = 'Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 500MB)';
                 $message_type = 'error';
             }
         }
@@ -394,7 +394,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                 <div class="file-upload-wrapper">
                                     <div class="file-input-wrapper">
                                         <label for="audio_file" class="file-input-label">
-                                            <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 50MB)</span>
+                                            <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 500MB)</span>
                                         </label>
                                         <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4,audio/x-m4a" class="file-input" onchange="previewAudio(this)">
                                     </div>
@@ -462,7 +462,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                 <div class="file-upload-wrapper">
                                     <div class="file-input-wrapper">
                                         <label for="audio_file" class="file-input-label">
-                                            <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 50MB)</span>
+                                            <span id="audio-label-text">🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 500MB)</span>
                                         </label>
                                         <input type="file" id="audio_file" name="audio_file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/m4a,audio/mp4,audio/x-m4a" class="file-input" onchange="previewAudio(this)">
                                     </div>
@@ -729,7 +729,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                 labelText.textContent = '✓ ' + file.name + ' (' + formatFileSize(file.size) + ')';
             } else {
                 preview.innerHTML = '';
-                labelText.textContent = '🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 50MB)';
+                labelText.textContent = '🎵 Choose Audio File (MP3, WAV, OGG, M4A - Max 500MB)';
                 if (durationInput) {
                     durationInput.value = '';
                 }
