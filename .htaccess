@@ -1,6 +1,14 @@
 # Enable rewrite engine
 RewriteEngine On
 
+# PHP Configuration for large file uploads (up to 1GB)
+# Note: These only work if PHP is running as Apache module
+php_value upload_max_filesize 1024M
+php_value post_max_size 1024M
+php_value max_execution_time 0
+php_value max_input_time 0
+php_value memory_limit -1
+
 # Redirect to admin login if accessing root
 RewriteCond %{REQUEST_URI} ^/dhama/?$
 RewriteRule ^$ admin/login.php [L]

@@ -445,7 +445,7 @@ Create a new song.
 | `title` | string | Yes | Song title |
 | `artist_id` | integer | Yes | Artist ID |
 | `description` | string | No | Song description |
-| `audio` | file | Yes* | Audio file (MP3, WAV, OGG, M4A, max 500MB) |
+| `audio` | file | Yes* | Audio file (MP3, WAV, OGG, M4A, max 1GB) |
 | `audio_url` | string | Yes* | Audio URL (alternative to file upload) |
 | `cover_image` | file | No | Cover image file (JPG, PNG, GIF, WEBP, max 10MB) |
 | `cover_image_url` | string | No | Cover image URL |

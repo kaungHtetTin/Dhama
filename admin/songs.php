@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($uploaded_url) {
                 $audio_url = $uploaded_url;
             } else {
-                $message = 'Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 500MB)';
+                $message = 'Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 1GB)';
                 $message_type = 'error';
             }
         }

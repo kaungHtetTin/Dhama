@@ -46,7 +46,7 @@ try {
             if ($uploaded_url) {
                 $audio_url = $uploaded_url;
             } else {
-                sendError('Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 500MB)', 400);
+                sendError('Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 1GB)', 400);
             }
         }
         // Handle audio URL (if provided)
@@ -147,7 +147,7 @@ try {
             if ($uploaded_url) {
                 $audio_url = $uploaded_url;
             } else {
-                sendError('Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 500MB)', 400);
+                sendError('Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 1GB)', 400);
             }
         }
         // Handle audio URL (if provided)

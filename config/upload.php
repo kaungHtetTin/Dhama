@@ -39,23 +39,44 @@ function uploadFile($file, $type = 'image', $subfolder = '') {
         }
     }
     
-    // Check file type
+    // Get file extension first (for fallback validation)
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    
+    // Check file extension first (more reliable for some file types)
+    if (!in_array($extension, $allowedExtensions)) {
+        error_log("[UPLOAD] Extension not allowed: $extension (file: {$file['name']})");
+        return false;
+    }
+    
+    // Check file type using MIME detection
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mimeType = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
     
-    if (!in_array($mimeType, $allowedTypes)) {
-        return false;
+    // Log detected MIME type for debugging
+    error_log("[UPLOAD] File: {$file['name']}, Extension: $extension, MIME Type: $mimeType");
+    
+    // For m4a files, accept multiple possible MIME types or allow based on extension
+    if ($extension === 'm4a') {
+        $m4aMimeTypes = ['audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/mpeg', 'audio/mp3', 'application/octet-stream'];
+        if (!in_array($mimeType, $m4aMimeTypes)) {
+            // Still allow if extension is correct (some systems detect m4a differently)
+            error_log("[UPLOAD] M4A file with unexpected MIME type: $mimeType, but allowing based on extension (.m4a)");
+            // Continue - we'll allow it based on extension since .m4a is a valid audio format
+        } else {
+            error_log("[UPLOAD] M4A file validated - MIME type: $mimeType matches allowed types");
+        }
+    } else {
+        // For other files, check MIME type strictly
+        if (!in_array($mimeType, $allowedTypes)) {
+            error_log("[UPLOAD] MIME type not allowed: $mimeType (file: {$file['name']}, extension: $extension)");
+            error_log("[UPLOAD] Allowed MIME types: " . implode(', ', $allowedTypes));
+            return false;
+        }
     }
     
-    // Get file extension
-    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if (!in_array($extension, $allowedExtensions)) {
-        return false;
-    }
-    
-    // Check file size (10MB for images, 500MB for audio)
-    $maxSize = $type === 'image' ? 10 * 1024 * 1024 : 500 * 1024 * 1024;
+    // Check file size (10MB for images, 1GB for audio)
+    $maxSize = $type === 'image' ? 10 * 1024 * 1024 : 1024 * 1024 * 1024; // 1GB = 1024MB
     if ($file['size'] > $maxSize) {
         return false;
     }

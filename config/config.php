@@ -15,6 +15,18 @@ date_default_timezone_set('UTC');
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Set unlimited execution time for long-running operations (file uploads, etc.)
+ini_set('max_execution_time', 0);
+set_time_limit(0);
+
+// Set unlimited memory limit for large file operations
+ini_set('memory_limit', '-1');
+
+// Set upload limits for large files (up to 1GB)
+ini_set('post_max_size', '1024M');
+ini_set('upload_max_filesize', '1024M');
+ini_set('max_input_time', 0);
+
 // Base URL
 define('BASE_URL', 'https://www.calamuseducation.com/dhama/');
 

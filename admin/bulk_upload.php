@@ -11,7 +11,224 @@ $conn = getDBConnection();
 $message = '';
 $message_type = '';
 
-// Handle bulk upload
+// Handle single file upload via AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'upload_single') {
+    header('Content-Type: application/json');
+    
+    // Error handler to catch and log errors
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        error_log("[BULK UPLOAD PHP] Error: $errstr in $errfile on line $errline");
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Server error: ' . $errstr,
+            'debug' => [
+                'file' => basename($errfile),
+                'line' => $errline,
+                'errno' => $errno
+            ]
+        ]);
+        exit;
+    });
+    
+    try {
+        $artist_id = intval($_POST['artist_id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $duration = intval($_POST['duration'] ?? 0);
+        
+        error_log("[BULK UPLOAD PHP] Received upload request - Artist ID: $artist_id, Title: $title, Duration: $duration");
+        
+        if ($artist_id <= 0) {
+            error_log("[BULK UPLOAD PHP] Error: Invalid artist ID");
+            echo json_encode(['success' => false, 'error' => 'Please select an artist']);
+            exit;
+        }
+        
+        // Verify artist exists
+        $artist_check = $conn->prepare("SELECT id FROM artists WHERE id = ?");
+        if (!$artist_check) {
+            error_log("[BULK UPLOAD PHP] Error: Failed to prepare artist check query - " . $conn->error);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
+            exit;
+        }
+        
+        $artist_check->bind_param("i", $artist_id);
+        $artist_check->execute();
+        if ($artist_check->get_result()->num_rows === 0) {
+            error_log("[BULK UPLOAD PHP] Error: Artist ID $artist_id not found");
+            echo json_encode(['success' => false, 'error' => 'Artist not found']);
+            exit;
+        }
+        $artist_check->close();
+        
+        if (!isset($_FILES['audio_file'])) {
+            error_log("[BULK UPLOAD PHP] Error: No file uploaded");
+            // Check if it's a POST size limit issue
+            $content_length = $_SERVER['CONTENT_LENGTH'] ?? 0;
+            $post_max_size = ini_get('post_max_size');
+            if ($content_length > 0) {
+                error_log("[BULK UPLOAD PHP] Content-Length: $content_length, post_max_size: $post_max_size");
+                echo json_encode([
+                    'success' => false, 
+                    'error' => 'File too large. POST size limit exceeded. Please increase post_max_size in php.ini to at least 1024M',
+                    'debug' => [
+                        'content_length' => $content_length,
+                        'post_max_size' => $post_max_size,
+                        'upload_max_filesize' => ini_get('upload_max_filesize')
+                    ]
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'No file uploaded']);
+            }
+            exit;
+        }
+        
+        $file_error = $_FILES['audio_file']['error'];
+        if ($file_error !== UPLOAD_ERR_OK) {
+            $error_messages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize (current limit: ' . ini_get('upload_max_filesize') . '). Please increase to 1024M in php.ini',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+            ];
+            $error_msg = $error_messages[$file_error] ?? "Upload error code: $file_error";
+            error_log("[BULK UPLOAD PHP] Error: File upload error - $error_msg");
+            echo json_encode([
+                'success' => false, 
+                'error' => 'File upload error: ' . $error_msg,
+                'debug' => [
+                    'error_code' => $file_error,
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'post_max_size' => ini_get('post_max_size')
+                ]
+            ]);
+            exit;
+        }
+        
+        error_log("[BULK UPLOAD PHP] File received: " . $_FILES['audio_file']['name'] . " (" . $_FILES['audio_file']['size'] . " bytes)");
+        
+        // Upload audio file
+        $file_name = $_FILES['audio_file']['name'];
+        $file_size = $_FILES['audio_file']['size'];
+        $file_type = $_FILES['audio_file']['type'];
+        $file_extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        
+        error_log("[BULK UPLOAD PHP] Attempting to upload file: $file_name");
+        error_log("[BULK UPLOAD PHP] File details - Size: $file_size bytes, Type: $file_type, Extension: $file_extension");
+        
+        $audio_url = uploadFile($_FILES['audio_file'], 'audio', 'songs');
+        
+        if (!$audio_url) {
+            error_log("[BULK UPLOAD PHP] Error: uploadFile() returned false for file: $file_name");
+            error_log("[BULK UPLOAD PHP] File extension: $file_extension");
+            error_log("[BULK UPLOAD PHP] File size: $file_size bytes (" . round($file_size / 1024 / 1024, 2) . " MB)");
+            error_log("[BULK UPLOAD PHP] File MIME type: $file_type");
+            
+            // Check if it's a size issue
+            $maxSize = 1024 * 1024 * 1024; // 1GB
+            if ($file_size > $maxSize) {
+                $error_msg = "File size ($file_size bytes) exceeds maximum allowed size (1GB)";
+            } else {
+                $error_msg = "Failed to upload audio file. Please check file type (MP3, WAV, OGG, M4A) and size (max 1GB). Detected extension: $file_extension, MIME type: $file_type";
+            }
+            
+            echo json_encode([
+                'success' => false, 
+                'error' => $error_msg,
+                'debug' => [
+                    'filename' => $file_name,
+                    'extension' => $file_extension,
+                    'size' => $file_size,
+                    'mime_type' => $file_type,
+                    'upload_max_filesize' => ini_get('upload_max_filesize'),
+                    'post_max_size' => ini_get('post_max_size')
+                ]
+            ]);
+            exit;
+        }
+        
+        error_log("[BULK UPLOAD PHP] File uploaded successfully: $audio_url");
+        
+        // Extract title from filename if not provided
+        if (empty($title)) {
+            $title = pathinfo($_FILES['audio_file']['name'], PATHINFO_FILENAME);
+            $title = preg_replace('/[_-]/', ' ', $title);
+            $title = trim($title);
+            error_log("[BULK UPLOAD PHP] Extracted title from filename: $title");
+        }
+        
+        // Insert song into database
+        $stmt = $conn->prepare("INSERT INTO songs (title, artist_id, description, audio_url, duration) VALUES (?, ?, ?, ?, ?)");
+        if (!$stmt) {
+            error_log("[BULK UPLOAD PHP] Error: Failed to prepare INSERT query - " . $conn->error);
+            deleteFile($audio_url);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
+            exit;
+        }
+        
+        $description = '';
+        $typeString = "s" . "i" . "s" . "s" . "i";
+        $stmt->bind_param($typeString, $title, $artist_id, $description, $audio_url, $duration);
+        
+        if (!$stmt->execute()) {
+            error_log("[BULK UPLOAD PHP] Error: Failed to execute INSERT - " . $stmt->error);
+            // Delete uploaded file if database insert failed
+            deleteFile($audio_url);
+            echo json_encode(['success' => false, 'error' => 'Failed to save song: ' . $stmt->error]);
+            $stmt->close();
+            exit;
+        }
+        
+        $song_id = $conn->insert_id;
+        $stmt->close();
+        error_log("[BULK UPLOAD PHP] Song inserted successfully with ID: $song_id");
+        
+        // Get the created song
+        $stmt = $conn->prepare("SELECT s.*, a.name as artist_name FROM songs s LEFT JOIN artists a ON s.artist_id = a.id WHERE s.id = ?");
+        if (!$stmt) {
+            error_log("[BULK UPLOAD PHP] Error: Failed to prepare SELECT query - " . $conn->error);
+            echo json_encode(['success' => false, 'error' => 'Database error: ' . $conn->error]);
+            exit;
+        }
+        
+        $stmt->bind_param("i", $song_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $song = $result->fetch_assoc();
+        $stmt->close();
+        
+        error_log("[BULK UPLOAD PHP] Upload completed successfully for song ID: $song_id");
+        echo json_encode(['success' => true, 'song' => $song, 'message' => 'Song uploaded successfully']);
+        
+    } catch (Exception $e) {
+        error_log("[BULK UPLOAD PHP] Exception: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Server error: ' . $e->getMessage(),
+            'debug' => [
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine()
+            ]
+        ]);
+    } catch (Error $e) {
+        error_log("[BULK UPLOAD PHP] Fatal Error: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Fatal error: ' . $e->getMessage(),
+            'debug' => [
+                'file' => basename($e->getFile()),
+                'line' => $e->getLine()
+            ]
+        ]);
+    }
+    
+    restore_error_handler();
+    exit;
+}
+
+// Handle bulk upload (legacy - kept for backward compatibility)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'bulk_upload') {
     $artist_id = intval($_POST['artist_id'] ?? 0);
     
@@ -124,12 +341,29 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
         }
         .file-item {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             padding: 12px;
             background: var(--bg-color);
             border-radius: 4px;
             margin-bottom: 8px;
+            position: relative;
+        }
+        .file-item.uploading {
+            border: 2px solid var(--primary-color);
+        }
+        .file-item.success {
+            border: 2px solid #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+        .file-item.error {
+            border: 2px solid #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+        .file-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
         .file-info {
             flex: 1;
@@ -143,6 +377,29 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             font-size: 12px;
             color: var(--text-secondary);
         }
+        .file-status {
+            margin-left: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .file-status.waiting {
+            background: #9e9e9e;
+            color: white;
+        }
+        .file-status.uploading {
+            background: var(--primary-color);
+            color: white;
+        }
+        .file-status.success {
+            background: #4caf50;
+            color: white;
+        }
+        .file-status.error {
+            background: #dc3545;
+            color: white;
+        }
         .file-duration {
             margin-left: 12px;
             padding: 4px 8px;
@@ -151,38 +408,51 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             border-radius: 4px;
             font-size: 12px;
         }
-        .remove-file {
-            margin-left: 12px;
-            padding: 4px 12px;
-            background: var(--danger-color, #dc3545);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .remove-file:hover {
-            opacity: 0.9;
-        }
-        .upload-progress {
+        .file-progress {
+            width: 100%;
+            margin-top: 8px;
             display: none;
+        }
+        .file-progress.active {
+            display: block;
+        }
+        .file-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .file-progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+            transition: width 0.1s;
+        }
+        .file-progress-text {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .overall-progress {
             margin-top: 20px;
             padding: 16px;
             background: var(--bg-color);
             border-radius: 4px;
+            display: none;
         }
-        .upload-progress.active {
+        .overall-progress.active {
             display: block;
         }
-        .progress-bar {
+        .overall-progress-bar {
             width: 100%;
-            height: 8px;
+            height: 10px;
             background: #e0e0e0;
-            border-radius: 4px;
+            border-radius: 5px;
             overflow: hidden;
             margin-top: 8px;
         }
-        .progress-fill {
+        .overall-progress-fill {
             height: 100%;
             background: var(--primary-color);
             width: 0%;
@@ -277,10 +547,7 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
                         </div>
                     </div>
 
-                    <form method="POST" action="" enctype="multipart/form-data" id="bulkUploadForm">
-                        <input type="hidden" name="action" value="bulk_upload">
-                        
-                        <div class="card">
+                    <div class="card">
                             <div class="form-group">
                                 <label for="artist_id">Artist *</label>
                                 <select id="artist_id" name="artist_id" required>
@@ -300,7 +567,7 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
                                         <input type="file" id="audio_files" name="audio_files[]" multiple accept="audio/*" required>
                                         <div>
                                             <strong>Click to select files</strong> or drag and drop<br>
-                                            <span style="font-size: 12px; color: var(--text-secondary);">Supported: MP3, WAV, OGG, M4A (max 500MB each)</span>
+                                            <span style="font-size: 12px; color: var(--text-secondary);">Supported: MP3, WAV, OGG, M4A (max 1GB each)</span>
                                         </div>
                                     </label>
                                 </div>
@@ -312,19 +579,19 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
 
                             <div class="file-list" id="fileList"></div>
 
-                            <div class="upload-progress" id="uploadProgress">
-                                <div>Processing files and extracting metadata...</div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="progressFill"></div>
+                            <div class="overall-progress" id="overallProgress">
+                                <div><strong>Overall Progress:</strong> <span id="overallProgressText">0 / 0</span></div>
+                                <div class="overall-progress-bar">
+                                    <div class="overall-progress-fill" id="overallProgressFill"></div>
                                 </div>
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" class="btn btn-primary" id="submitBtn">Upload Songs</button>
-                                <a href="songs.php" class="btn btn-secondary">Cancel</a>
+                                <button type="button" class="btn btn-primary" id="uploadBtn">Start Upload</button>
+                                <button type="button" class="btn btn-secondary" id="cancelBtn" style="display: none;">Cancel</button>
+                                <a href="songs.php" class="btn btn-secondary">Back to Songs</a>
                             </div>
                         </div>
-                    </form>
                 </div>
             </div>
         </main>
@@ -333,35 +600,45 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
     <script>
         const audioFilesInput = document.getElementById('audio_files');
         const fileList = document.getElementById('fileList');
-        const uploadProgress = document.getElementById('uploadProgress');
-        const progressFill = document.getElementById('progressFill');
-        const submitBtn = document.getElementById('submitBtn');
-        const form = document.getElementById('bulkUploadForm');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const artistSelect = document.getElementById('artist_id');
         const fileCount = document.getElementById('fileCount');
         const fileCountText = document.getElementById('fileCountText');
+        const overallProgress = document.getElementById('overallProgress');
+        const overallProgressText = document.getElementById('overallProgressText');
+        const overallProgressFill = document.getElementById('overallProgressFill');
         
         let fileData = [];
         let processingCount = 0;
+        let currentUploadIndex = -1;
+        let isUploading = false;
+        let uploadCancelled = false;
 
         // Handle file selection
         audioFilesInput.addEventListener('change', function(e) {
+            console.log('[BULK UPLOAD] File selection triggered');
             const files = Array.from(e.target.files);
+            console.log('[BULK UPLOAD] Files selected:', files.length, files.map(f => f.name));
+            
             fileData = [];
             fileList.innerHTML = '';
             
             if (files.length === 0) {
+                console.log('[BULK UPLOAD] No files selected');
                 fileCount.style.display = 'none';
+                uploadBtn.disabled = true;
                 return;
             }
             
             fileCount.style.display = 'block';
             fileCountText.textContent = `${files.length} file(s) selected`;
+            uploadBtn.disabled = false;
 
-            uploadProgress.classList.add('active');
-            submitBtn.disabled = true;
             processingCount = 0;
 
             files.forEach((file, index) => {
+                console.log(`[BULK UPLOAD] Processing file ${index + 1}/${files.length}:`, file.name, `(${formatFileSize(file.size)})`);
                 processFile(file, index, files.length);
             });
         });
@@ -370,6 +647,9 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
             fileItem.id = `file-item-${index}`;
+            
+            const fileHeader = document.createElement('div');
+            fileHeader.className = 'file-item-header';
             
             const fileInfo = document.createElement('div');
             fileInfo.className = 'file-info';
@@ -382,9 +662,35 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             fileMeta.className = 'file-meta';
             fileMeta.textContent = 'Processing...';
             
+            const fileStatus = document.createElement('span');
+            fileStatus.className = 'file-status waiting';
+            fileStatus.textContent = 'Waiting';
+            fileStatus.id = `file-status-${index}`;
+            
             fileInfo.appendChild(fileName);
             fileInfo.appendChild(fileMeta);
-            fileItem.appendChild(fileInfo);
+            fileHeader.appendChild(fileInfo);
+            fileHeader.appendChild(fileStatus);
+            
+            // Progress bar
+            const fileProgress = document.createElement('div');
+            fileProgress.className = 'file-progress';
+            fileProgress.id = `file-progress-${index}`;
+            const progressBar = document.createElement('div');
+            progressBar.className = 'file-progress-bar';
+            const progressFill = document.createElement('div');
+            progressFill.className = 'file-progress-fill';
+            progressFill.id = `file-progress-fill-${index}`;
+            const progressText = document.createElement('div');
+            progressText.className = 'file-progress-text';
+            progressText.id = `file-progress-text-${index}`;
+            progressText.textContent = '0%';
+            progressBar.appendChild(progressFill);
+            fileProgress.appendChild(progressBar);
+            fileProgress.appendChild(progressText);
+            
+            fileItem.appendChild(fileHeader);
+            fileItem.appendChild(fileProgress);
             fileList.appendChild(fileItem);
 
             // Create audio element to get duration
@@ -392,57 +698,58 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             const objectUrl = URL.createObjectURL(file);
             
             audio.addEventListener('loadedmetadata', function() {
+                console.log(`[BULK UPLOAD] Metadata loaded for file ${index + 1}:`, file.name);
                 const duration = Math.round(audio.duration);
                 const durationText = formatDuration(duration);
+                console.log(`[BULK UPLOAD] Duration extracted:`, duration, `seconds (${durationText})`);
                 
                 // Extract title from filename
                 const title = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ').trim();
+                console.log(`[BULK UPLOAD] Title extracted:`, title);
                 
                 // Update UI
-                fileMeta.textContent = `Title: ${title} | Size: ${formatFileSize(file.size)}`;
-                
-                const durationBadge = document.createElement('span');
-                durationBadge.className = 'file-duration';
-                durationBadge.textContent = durationText;
-                fileItem.appendChild(durationBadge);
+                fileMeta.textContent = `Title: ${title} | Size: ${formatFileSize(file.size)} | Duration: ${durationText}`;
                 
                 // Store file data
                 fileData.push({
                     file: file,
                     title: title,
-                    duration: duration
+                    duration: duration,
+                    index: index
                 });
                 
                 processingCount++;
-                updateProgress(processingCount, total);
+                console.log(`[BULK UPLOAD] Processing progress: ${processingCount}/${total}`);
                 
                 // Clean up
                 URL.revokeObjectURL(objectUrl);
                 
                 if (processingCount === total) {
-                    uploadProgress.classList.remove('active');
-                    submitBtn.disabled = false;
+                    console.log(`[BULK UPLOAD] All files processed. Ready to upload:`, fileData.length);
                     fileCountText.textContent = `${total} file(s) ready to upload`;
                 }
             });
             
-            audio.addEventListener('error', function() {
+            audio.addEventListener('error', function(e) {
+                console.error(`[BULK UPLOAD] Error loading metadata for file ${index + 1}:`, file.name, e);
                 fileMeta.textContent = 'Error: Could not read audio file';
                 fileMeta.style.color = 'var(--danger-color, #dc3545)';
                 
                 // Still add file but without duration
+                const title = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ').trim();
                 fileData.push({
                     file: file,
-                    title: file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ').trim(),
-                    duration: 0
+                    title: title,
+                    duration: 0,
+                    index: index
                 });
+                console.log(`[BULK UPLOAD] Added file without duration:`, title);
                 
                 processingCount++;
-                updateProgress(processingCount, total);
+                console.log(`[BULK UPLOAD] Processing progress: ${processingCount}/${total}`);
                 
                 if (processingCount === total) {
-                    uploadProgress.classList.remove('active');
-                    submitBtn.disabled = false;
+                    console.log(`[BULK UPLOAD] All files processed (some with errors). Ready to upload:`, fileData.length);
                     fileCountText.textContent = `${total} file(s) ready to upload`;
                 }
                 
@@ -452,9 +759,301 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             audio.src = objectUrl;
         }
 
-        function updateProgress(current, total) {
-            const percentage = (current / total) * 100;
-            progressFill.style.width = percentage + '%';
+        // Start upload process
+        uploadBtn.addEventListener('click', function() {
+            console.log('[BULK UPLOAD] Upload button clicked');
+            console.log('[BULK UPLOAD] File data:', fileData.length, 'files');
+            
+            if (fileData.length === 0) {
+                console.warn('[BULK UPLOAD] No files to upload');
+                alert('Please select at least one audio file');
+                return;
+            }
+            
+            const artistId = artistSelect.value;
+            console.log('[BULK UPLOAD] Selected artist ID:', artistId);
+            
+            if (!artistId) {
+                console.warn('[BULK UPLOAD] No artist selected');
+                alert('Please select an artist');
+                return;
+            }
+            
+            console.log('[BULK UPLOAD] Starting upload process...');
+            startUpload(artistId);
+        });
+
+        // Cancel upload
+        cancelBtn.addEventListener('click', function() {
+            console.log('[BULK UPLOAD] Upload cancelled by user');
+            console.log('[BULK UPLOAD] Current upload index:', currentUploadIndex);
+            uploadCancelled = true;
+            isUploading = false;
+            cancelBtn.style.display = 'none';
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Start Upload';
+        });
+
+        function startUpload(artistId) {
+            console.log('[BULK UPLOAD] startUpload() called with artistId:', artistId);
+            
+            if (isUploading) {
+                console.warn('[BULK UPLOAD] Upload already in progress');
+                return;
+            }
+            
+            console.log('[BULK UPLOAD] Initializing upload process...');
+            isUploading = true;
+            uploadCancelled = false;
+            currentUploadIndex = -1;
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            cancelBtn.style.display = 'inline-block';
+            overallProgress.classList.add('active');
+            
+            console.log('[BULK UPLOAD] Resetting file statuses for', fileData.length, 'files');
+            // Reset all file statuses
+            fileData.forEach((data) => {
+                const fileItem = document.getElementById(`file-item-${data.index}`);
+                const fileStatus = document.getElementById(`file-status-${data.index}`);
+                const fileProgress = document.getElementById(`file-progress-${data.index}`);
+                
+                if (!fileItem || !fileStatus || !fileProgress) {
+                    console.error(`[BULK UPLOAD] Missing DOM elements for file index ${data.index}`);
+                    return;
+                }
+                
+                fileItem.className = 'file-item';
+                fileStatus.className = 'file-status waiting';
+                fileStatus.textContent = 'Waiting';
+                fileProgress.classList.remove('active');
+                document.getElementById(`file-progress-fill-${data.index}`).style.width = '0%';
+                document.getElementById(`file-progress-text-${data.index}`).textContent = '0%';
+            });
+            
+            console.log('[BULK UPLOAD] Starting first file upload...');
+            uploadNext(artistId);
+        }
+
+        function uploadNext(artistId) {
+            console.log('[BULK UPLOAD] uploadNext() called');
+            
+            if (uploadCancelled) {
+                console.log('[BULK UPLOAD] Upload was cancelled, stopping');
+                return;
+            }
+            
+            currentUploadIndex++;
+            console.log(`[BULK UPLOAD] Current upload index: ${currentUploadIndex}/${fileData.length}`);
+            
+            if (currentUploadIndex >= fileData.length) {
+                // All files uploaded
+                console.log('[BULK UPLOAD] All files processed');
+                isUploading = false;
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Start Upload';
+                cancelBtn.style.display = 'none';
+                overallProgress.classList.remove('active');
+                
+                const successCount = fileData.filter(d => {
+                    const status = document.getElementById(`file-status-${d.index}`);
+                    return status && status.classList.contains('success');
+                }).length;
+                
+                console.log(`[BULK UPLOAD] Upload complete! Success: ${successCount}/${fileData.length}`);
+                alert(`Upload complete! ${successCount} of ${fileData.length} file(s) uploaded successfully.`);
+                return;
+            }
+            
+            const fileDataItem = fileData[currentUploadIndex];
+            console.log(`[BULK UPLOAD] Starting upload for file ${currentUploadIndex + 1}:`, fileDataItem.title, fileDataItem.file.name);
+            uploadFile(fileDataItem, artistId);
+        }
+
+        function uploadFile(fileDataItem, artistId) {
+            console.log(`[BULK UPLOAD] uploadFile() called for file index ${fileDataItem.index}`);
+            console.log(`[BULK UPLOAD] File details:`, {
+                name: fileDataItem.file.name,
+                size: fileDataItem.file.size,
+                type: fileDataItem.file.type,
+                title: fileDataItem.title,
+                duration: fileDataItem.duration,
+                artistId: artistId
+            });
+            
+            const fileItem = document.getElementById(`file-item-${fileDataItem.index}`);
+            const fileStatus = document.getElementById(`file-status-${fileDataItem.index}`);
+            const fileProgress = document.getElementById(`file-progress-${fileDataItem.index}`);
+            const progressFill = document.getElementById(`file-progress-fill-${fileDataItem.index}`);
+            const progressText = document.getElementById(`file-progress-text-${fileDataItem.index}`);
+            
+            if (!fileItem || !fileStatus || !fileProgress || !progressFill || !progressText) {
+                console.error(`[BULK UPLOAD] Missing DOM elements for file index ${fileDataItem.index}`, {
+                    fileItem: !!fileItem,
+                    fileStatus: !!fileStatus,
+                    fileProgress: !!fileProgress,
+                    progressFill: !!progressFill,
+                    progressText: !!progressText
+                });
+                return;
+            }
+            
+            // Update UI to show uploading
+            fileItem.className = 'file-item uploading';
+            fileStatus.className = 'file-status uploading';
+            fileStatus.textContent = 'Uploading...';
+            fileProgress.classList.add('active');
+            
+            // Create FormData
+            console.log(`[BULK UPLOAD] Creating FormData...`);
+            const formData = new FormData();
+            formData.append('action', 'upload_single');
+            formData.append('artist_id', artistId);
+            formData.append('title', fileDataItem.title);
+            formData.append('duration', fileDataItem.duration);
+            formData.append('audio_file', fileDataItem.file);
+            
+            console.log(`[BULK UPLOAD] FormData created with:`, {
+                action: 'upload_single',
+                artist_id: artistId,
+                title: fileDataItem.title,
+                duration: fileDataItem.duration,
+                audio_file: fileDataItem.file.name + ' (' + formatFileSize(fileDataItem.file.size) + ')'
+            });
+            
+            // Create XMLHttpRequest for progress tracking
+            console.log(`[BULK UPLOAD] Creating XMLHttpRequest...`);
+            const xhr = new XMLHttpRequest();
+            
+            // Track upload progress
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressFill.style.width = percentComplete + '%';
+                    progressText.textContent = Math.round(percentComplete) + '%';
+                    console.log(`[BULK UPLOAD] Upload progress for ${fileDataItem.file.name}: ${Math.round(percentComplete)}% (${formatFileSize(e.loaded)}/${formatFileSize(e.total)})`);
+                } else {
+                    console.log(`[BULK UPLOAD] Upload progress (length not computable): ${e.loaded} bytes`);
+                }
+            });
+            
+            // Handle completion
+            xhr.addEventListener('load', function() {
+                console.log(`[BULK UPLOAD] XHR load event fired for ${fileDataItem.file.name}`);
+                console.log(`[BULK UPLOAD] Response status: ${xhr.status} ${xhr.statusText}`);
+                console.log(`[BULK UPLOAD] Response headers:`, xhr.getAllResponseHeaders());
+                console.log(`[BULK UPLOAD] Response text (first 500 chars):`, xhr.responseText.substring(0, 500));
+                
+                if (xhr.status === 200) {
+                    try {
+                        console.log(`[BULK UPLOAD] Attempting to parse JSON response...`);
+                        const response = JSON.parse(xhr.responseText);
+                        console.log(`[BULK UPLOAD] Parsed response:`, response);
+                        
+                        if (response.success) {
+                            // Success
+                            console.log(`[BULK UPLOAD] ✅ Upload successful for ${fileDataItem.file.name}`, response.song);
+                            fileItem.className = 'file-item success';
+                            fileStatus.className = 'file-status success';
+                            fileStatus.textContent = 'Success';
+                            progressFill.style.width = '100%';
+                            progressText.textContent = '100%';
+                            
+                            // Update overall progress
+                            updateOverallProgress();
+                            
+                            // Upload next file
+                            setTimeout(() => uploadNext(artistId), 500);
+                        } else {
+                            // Error from server
+                            console.error(`[BULK UPLOAD] ❌ Server returned error for ${fileDataItem.file.name}:`, response.error);
+                            fileItem.className = 'file-item error';
+                            fileStatus.className = 'file-status error';
+                            fileStatus.textContent = 'Error';
+                            progressText.textContent = response.error || 'Upload failed';
+                            
+                            updateOverallProgress();
+                            setTimeout(() => uploadNext(artistId), 500);
+                        }
+                    } catch (e) {
+                        // JSON parse error
+                        console.error(`[BULK UPLOAD] ❌ JSON parse error for ${fileDataItem.file.name}:`, e);
+                        console.error(`[BULK UPLOAD] Full response text:`, xhr.responseText);
+                        fileItem.className = 'file-item error';
+                        fileStatus.className = 'file-status error';
+                        fileStatus.textContent = 'Error';
+                        progressText.textContent = 'Server error';
+                        
+                        updateOverallProgress();
+                        setTimeout(() => uploadNext(artistId), 500);
+                    }
+                } else {
+                    // HTTP error
+                    console.error(`[BULK UPLOAD] ❌ HTTP error ${xhr.status} for ${fileDataItem.file.name}`);
+                    console.error(`[BULK UPLOAD] Response text:`, xhr.responseText);
+                    fileItem.className = 'file-item error';
+                    fileStatus.className = 'file-status error';
+                    fileStatus.textContent = 'Error';
+                    progressText.textContent = 'HTTP ' + xhr.status;
+                    
+                    updateOverallProgress();
+                    setTimeout(() => uploadNext(artistId), 500);
+                }
+            });
+            
+            // Handle errors
+            xhr.addEventListener('error', function(e) {
+                console.error(`[BULK UPLOAD] ❌ Network error for ${fileDataItem.file.name}:`, e);
+                console.error(`[BULK UPLOAD] XHR readyState: ${xhr.readyState}, status: ${xhr.status}`);
+                fileItem.className = 'file-item error';
+                fileStatus.className = 'file-status error';
+                fileStatus.textContent = 'Error';
+                progressText.textContent = 'Network error';
+                
+                updateOverallProgress();
+                setTimeout(() => uploadNext(artistId), 500);
+            });
+            
+            // Handle abort
+            xhr.addEventListener('abort', function() {
+                console.warn(`[BULK UPLOAD] ⚠️ Upload aborted for ${fileDataItem.file.name}`);
+            });
+            
+            // Handle timeout
+            xhr.addEventListener('timeout', function() {
+                console.error(`[BULK UPLOAD] ❌ Upload timeout for ${fileDataItem.file.name}`);
+                fileItem.className = 'file-item error';
+                fileStatus.className = 'file-status error';
+                fileStatus.textContent = 'Error';
+                progressText.textContent = 'Timeout';
+                
+                updateOverallProgress();
+                setTimeout(() => uploadNext(artistId), 500);
+            });
+            
+            // Send request
+            const url = 'bulk_upload.php';
+            console.log(`[BULK UPLOAD] Opening POST request to: ${url}`);
+            xhr.open('POST', url, true);
+            
+            // Set timeout (30 minutes for large files)
+            xhr.timeout = 30 * 60 * 1000;
+            console.log(`[BULK UPLOAD] Request timeout set to 30 minutes`);
+            
+            console.log(`[BULK UPLOAD] Sending request...`);
+            xhr.send(formData);
+            console.log(`[BULK UPLOAD] Request sent, waiting for response...`);
+        }
+
+        function updateOverallProgress() {
+            const completed = currentUploadIndex + 1;
+            const total = fileData.length;
+            const percentage = (completed / total) * 100;
+            
+            console.log(`[BULK UPLOAD] Overall progress: ${completed}/${total} (${Math.round(percentage)}%)`);
+            
+            overallProgressText.textContent = `${completed} / ${total}`;
+            overallProgressFill.style.width = percentage + '%';
         }
 
         function formatDuration(seconds) {
@@ -473,27 +1072,6 @@ $artists = $conn->query("SELECT id, name FROM artists ORDER BY name")->fetch_all
             }
             return bytes + ' bytes';
         }
-
-        // Handle form submission - add duration data
-        form.addEventListener('submit', function(e) {
-            if (fileData.length === 0) {
-                e.preventDefault();
-                alert('Please select at least one audio file');
-                return false;
-            }
-
-            // Create hidden inputs for durations
-            fileData.forEach((data, index) => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = `durations[${index}]`;
-                input.value = data.duration;
-                form.appendChild(input);
-            });
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Uploading...';
-        });
     </script>
 </body>
 </html>
