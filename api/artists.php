@@ -19,6 +19,7 @@ try {
         $data = getRequestData();
         $name = trim($data['name'] ?? '');
         $bio = trim($data['bio'] ?? '');
+        $pin = isset($data['pin']) ? (intval($data['pin']) ? 1 : 0) : 0;
         $image_url = '';
         
         // Validate required fields
@@ -53,8 +54,8 @@ try {
             $image_url = $data['image_url'];
         }
         
-        $stmt = $conn->prepare("INSERT INTO artists (name, bio, image_url) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $bio, $image_url);
+        $stmt = $conn->prepare("INSERT INTO artists (name, bio, image_url, pin) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("sssi", $name, $bio, $image_url, $pin);
         
         if ($stmt->execute()) {
             $id = $conn->insert_id;
@@ -100,7 +101,8 @@ try {
         $data = getRequestData();
         $name = trim($data['name'] ?? $old_artist['name']);
         $bio = trim($data['bio'] ?? $old_artist['bio']);
-        $image_url = $old_image_url;
+        $pin = isset($data['pin']) ? (intval($data['pin']) ? 1 : 0) : (isset($old_artist['pin']) ? intval($old_artist['pin']) : 0);
+        $image_url = $old_image_url; // Keep old image by default
         
         // Handle image upload (multipart/form-data)
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -129,8 +131,8 @@ try {
             $image_url = $data['image_url'];
         }
         
-        $stmt = $conn->prepare("UPDATE artists SET name = ?, bio = ?, image_url = ? WHERE id = ?");
-        $stmt->bind_param("sssi", $name, $bio, $image_url, $id);
+        $stmt = $conn->prepare("UPDATE artists SET name = ?, bio = ?, image_url = ?, pin = ? WHERE id = ?");
+        $stmt->bind_param("sssii", $name, $bio, $image_url, $pin, $id);
         
         if ($stmt->execute()) {
             // Delete old image if new one was uploaded
@@ -223,8 +225,8 @@ try {
         $count_result = $conn->query("SELECT COUNT(*) as total FROM artists");
         $total = $count_result->fetch_assoc()['total'];
         
-        // Get paginated artists
-        $stmt = $conn->prepare("SELECT * FROM artists ORDER BY name LIMIT ? OFFSET ?");
+        // Get paginated artists (pinned first, then by name)
+        $stmt = $conn->prepare("SELECT * FROM artists ORDER BY pin DESC, name LIMIT ? OFFSET ?");
         $stmt->bind_param("ii", $limit, $offset);
         $stmt->execute();
         $result = $stmt->get_result();

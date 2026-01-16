@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'create' || $action === 'update') {
         $name = trim($_POST['name'] ?? '');
         $bio = trim($_POST['bio'] ?? '');
+        $pin = isset($_POST['pin']) ? 1 : 0;
         $image_url = '';
         
         // Handle cropped image (base64) - priority
@@ -48,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if (!empty($name) && empty($message)) {
             if ($action === 'create') {
-                $stmt = $conn->prepare("INSERT INTO artists (name, bio, image_url) VALUES (?, ?, ?)");
-                $stmt->bind_param("sss", $name, $bio, $image_url);
+                $stmt = $conn->prepare("INSERT INTO artists (name, bio, image_url, pin) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("sssi", $name, $bio, $image_url, $pin);
                 if ($stmt->execute()) {
                     $message = 'Artist created successfully';
                     $message_type = 'success';
@@ -65,8 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $old_data = $old_result->fetch_assoc();
                 $old_image_url = $old_data['image_url'] ?? '';
                 
-                $stmt = $conn->prepare("UPDATE artists SET name = ?, bio = ?, image_url = ? WHERE id = ?");
-                $stmt->bind_param("sssi", $name, $bio, $image_url, $id);
+                // If no new image was uploaded, keep the old one
+                if (empty($image_url)) {
+                    $image_url = $old_image_url;
+                }
+                
+                $stmt = $conn->prepare("UPDATE artists SET name = ?, bio = ?, image_url = ?, pin = ? WHERE id = ?");
+                $stmt->bind_param("sssii", $name, $bio, $image_url, $pin, $id);
                 if ($stmt->execute()) {
                     // Delete old image if new one was uploaded
                     if (!empty($old_image_url) && $image_url !== $old_image_url && strpos($old_image_url, UPLOAD_URL) === 0) {
@@ -144,7 +150,7 @@ if (!empty($params)) {
 $totalPages = ceil($totalArtists / $perPage);
 
 // Get artists with pagination
-$query = "SELECT * FROM artists $whereClause ORDER BY created_at DESC LIMIT ? OFFSET ?";
+$query = "SELECT * FROM artists $whereClause ORDER BY pin DESC, created_at DESC LIMIT ? OFFSET ?";
 $params[] = $perPage;
 $params[] = $offset;
 $types .= 'ii';
@@ -360,6 +366,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                 <textarea id="bio" name="bio" rows="4"><?php echo htmlspecialchars($edit_artist['bio']); ?></textarea>
                             </div>
                             
+                            <div class="form-group" style="text-align: left;">
+                                <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; width: auto;">
+                                    <input type="checkbox" id="pin" name="pin" value="1" style="margin: 0; width: 20px;" <?php echo (isset($edit_artist['pin']) && $edit_artist['pin'] == 1) ? 'checked' : ''; ?>>
+                                    <span>📌 Pin this artist (show at top of list)</span>
+                                </label>
+                                <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Pinned artists will appear first in the artists list</small>
+                            </div>
+                            
                             <div class="form-group">
                                 <label>Artist Image (Square - 500x500px)</label>
                                 <?php if ($edit_artist['image_url']): ?>
@@ -433,6 +447,14 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                 <textarea id="bio" name="bio" rows="4"></textarea>
                             </div>
                             
+                            <div class="form-group" style="text-align:">
+                                <label style=" display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="pin" name="pin" value="1" style="margin: 0;width: 20px;">
+                                    <span>📌 Pin this artist (show at top of list)</span>
+                                </label>
+                                <small style="color: var(--text-secondary); display: block; margin-top: 4px;">Pinned artists will appear first in the artists list</small>
+                            </div>
+                            
                             <div class="form-group">
                                 <label>Artist Image (Square - 500x500px)</label>
                                 <div class="file-upload-wrapper">
@@ -503,6 +525,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                         <th>Name</th>
                                         <th>Bio</th>
                                         <th>Image</th>
+                                        <th>Pin</th>
                                         <th>Created</th>
                                         <th>Actions</th>
                                     </tr>
@@ -511,11 +534,23 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) 
                                     <?php foreach ($artists as $artist): ?>
                                         <tr>
                                             <td><?php echo $artist['id']; ?></td>
-                                            <td><strong><?php echo htmlspecialchars($artist['name']); ?></strong></td>
+                                            <td>
+                                                <?php if (isset($artist['pin']) && $artist['pin'] == 1): ?>
+                                                    <span style="color: var(--primary-color); margin-right: 4px;" title="Pinned">📌</span>
+                                                <?php endif; ?>
+                                                <strong><?php echo htmlspecialchars($artist['name']); ?></strong>
+                                            </td>
                                             <td><?php echo htmlspecialchars(substr($artist['bio'], 0, 50)) . (strlen($artist['bio']) > 50 ? '...' : ''); ?></td>
                                             <td>
                                                 <?php if ($artist['image_url']): ?>
                                                     <img src="<?php echo htmlspecialchars($artist['image_url']); ?>" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                <?php else: ?>
+                                                    <span class="text-muted">—</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (isset($artist['pin']) && $artist['pin'] == 1): ?>
+                                                    <span style="color: var(--primary-color); font-weight: 500;">📌 Pinned</span>
                                                 <?php else: ?>
                                                     <span class="text-muted">—</span>
                                                 <?php endif; ?>

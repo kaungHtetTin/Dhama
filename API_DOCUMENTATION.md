@@ -62,7 +62,7 @@ The API uses standard HTTP status codes:
 
 #### Get All Artists
 
-Retrieve a list of all artists with their song counts.
+Retrieve a list of all artists with their song counts. **Pinned artists appear first**, followed by unpinned artists sorted by name.
 
 **Endpoint:** `GET /api/artists.php` or `GET /api/?path=artists`
 
@@ -82,6 +82,7 @@ Retrieve a list of all artists with their song counts.
       "name": "Artist Name",
       "bio": "Artist biography",
       "image_url": "/uploads/images/artists/image.jpg",
+      "pin": 1,
       "created_at": "2024-01-01 12:00:00",
       "updated_at": "2024-01-01 12:00:00",
       "songs_count": 5
@@ -91,6 +92,8 @@ Retrieve a list of all artists with their song counts.
   "total": 1
 }
 ```
+
+**Note:** Artists are ordered by `pin DESC, name ASC`. Pinned artists (`pin: 1`) appear at the top of the list, followed by unpinned artists (`pin: 0`) sorted alphabetically by name.
 
 **Example Request:**
 
@@ -119,6 +122,7 @@ Retrieve detailed information about a specific artist.
   "name": "Artist Name",
   "bio": "Artist biography",
   "image_url": "/uploads/images/artists/image.jpg",
+  "pin": 0,
   "created_at": "2024-01-01 12:00:00",
   "updated_at": "2024-01-01 12:00:00",
   "songs_count": 5
@@ -153,6 +157,7 @@ Create a new artist.
 {
   "name": "Artist Name",
   "bio": "Artist biography (optional)",
+  "pin": 0,
   "image_url": "http://example.com/image.jpg (optional)",
   "image_base64": "data:image/jpeg;base64,... (optional, alternative to image_url)"
 }
@@ -163,6 +168,7 @@ Create a new artist.
 |-------|------|----------|-------------|
 | `name` | string | Yes | Artist name |
 | `bio` | string | No | Artist biography |
+| `pin` | integer | No | Pin status (0 = unpinned, 1 = pinned). Default: 0 |
 | `image` | file | No | Image file (JPG, PNG, GIF, WEBP, max 10MB) |
 | `image_url` | string | No | Image URL (alternative to file upload) |
 
@@ -174,6 +180,7 @@ Create a new artist.
   "name": "Artist Name",
   "bio": "Artist biography",
   "image_url": "/uploads/images/artists/image.jpg",
+  "pin": 0,
   "created_at": "2024-01-01 12:00:00",
   "updated_at": "2024-01-01 12:00:00",
   "songs_count": 0
@@ -190,6 +197,7 @@ curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -d '{
     "name": "New Artist",
     "bio": "Artist biography",
+    "pin": 1,
     "image_url": "http://example.com/image.jpg"
   }'
 ```
@@ -200,6 +208,7 @@ curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
 curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -F "name=New Artist" \
   -F "bio=Artist biography" \
+  -F "pin=1" \
   -F "image=@/path/to/image.jpg"
 ```
 
@@ -230,6 +239,7 @@ Update an existing artist.
 {
   "name": "Updated Artist Name",
   "bio": "Updated biography",
+  "pin": 1,
   "image_url": "http://example.com/new-image.jpg",
   "image_base64": "data:image/jpeg;base64,... (optional)"
 }
@@ -240,6 +250,7 @@ Update an existing artist.
 |-------|------|----------|-------------|
 | `name` | string | No | Artist name |
 | `bio` | string | No | Artist biography |
+| `pin` | integer | No | Pin status (0 = unpinned, 1 = pinned). If not provided, existing value is preserved |
 | `image` | file | No | New image file (replaces existing) |
 | `image_url` | string | No | New image URL (replaces existing) |
 
@@ -251,6 +262,7 @@ Update an existing artist.
   "name": "Updated Artist Name",
   "bio": "Updated biography",
   "image_url": "/uploads/images/artists/new-image.jpg",
+  "pin": 1,
   "created_at": "2024-01-01 12:00:00",
   "updated_at": "2024-01-01 13:00:00",
   "songs_count": 5
@@ -264,7 +276,8 @@ curl -X PUT https://www.calamuseducation.com/dhama/api/artists.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Name",
-    "bio": "Updated bio"
+    "bio": "Updated bio",
+    "pin": 1
   }'
 ```
 
@@ -794,11 +807,22 @@ Get information about the API and available endpoints.
   "name": "string",
   "bio": "string",
   "image_url": "string",
+  "pin": 0,
   "created_at": "datetime",
   "updated_at": "datetime",
   "songs_count": 0
 }
 ```
+
+**Field Descriptions:**
+- `id`: Unique artist identifier
+- `name`: Artist name
+- `bio`: Artist biography (optional)
+- `image_url`: URL to artist image (optional)
+- `pin`: Pin status (0 = unpinned, 1 = pinned). Pinned artists appear first in lists
+- `created_at`: Timestamp when artist was created
+- `updated_at`: Timestamp when artist was last updated
+- `songs_count`: Number of songs by this artist (computed field)
 
 ### Song Object
 
@@ -868,6 +892,7 @@ fetch("https://www.calamuseducation.com/dhama/api/artists.php", {
   body: JSON.stringify({
     name: "New Artist",
     bio: "Artist biography",
+    pin: 1,
     image_url: "http://example.com/image.jpg",
   }),
 })
@@ -878,6 +903,7 @@ fetch("https://www.calamuseducation.com/dhama/api/artists.php", {
 const formData = new FormData();
 formData.append("name", "New Artist");
 formData.append("bio", "Artist biography");
+formData.append("pin", "1");
 formData.append("image", fileInput.files[0]);
 
 fetch("https://www.calamuseducation.com/dhama/api/artists.php", {
@@ -896,6 +922,7 @@ fetch("https://www.calamuseducation.com/dhama/api/artists.php?id=1", {
   body: JSON.stringify({
     name: "Updated Name",
     bio: "Updated bio",
+    pin: 1,
   }),
 })
   .then((response) => response.json())
@@ -993,6 +1020,7 @@ curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -d '{
     "name": "New Artist",
     "bio": "Artist biography",
+    "pin": 1,
     "image_url": "http://example.com/image.jpg"
   }'
 
@@ -1000,6 +1028,7 @@ curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
 curl -X POST https://www.calamuseducation.com/dhama/api/artists.php \
   -F "name=New Artist" \
   -F "bio=Artist biography" \
+  -F "pin=1" \
   -F "image=@/path/to/image.jpg"
 
 # PUT - Update artist
@@ -1007,7 +1036,8 @@ curl -X PUT https://www.calamuseducation.com/dhama/api/artists.php?id=1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Updated Name",
-    "bio": "Updated bio"
+    "bio": "Updated bio",
+    "pin": 1
   }'
 
 # DELETE - Delete artist
@@ -1097,6 +1127,8 @@ curl https://www.calamuseducation.com/dhama/api/stats.php
    - The API automatically detects the content type and handles both formats
 
 8. **No Authentication**: All endpoints are publicly accessible. No authentication tokens or API keys are required.
+
+9. **Pin Feature**: Artists can be pinned to appear at the top of lists. Set `pin: 1` to pin an artist, or `pin: 0` to unpin. When retrieving all artists, pinned artists (`pin: 1`) are returned first, followed by unpinned artists sorted alphabetically by name. The pin field defaults to `0` (unpinned) if not specified when creating an artist.
 
 ---
 

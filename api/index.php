@@ -59,8 +59,8 @@ try {
             
             sendResponse($artist);
         } else {
-            // Get all artists
-            $result = $conn->query("SELECT * FROM artists ORDER BY name");
+            // Get all artists (pinned first, then by name)
+            $result = $conn->query("SELECT * FROM artists ORDER BY pin DESC, name");
             $artists = [];
             while ($row = $result->fetch_assoc()) {
                 // Get songs count for each artist
