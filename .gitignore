@@ -3,6 +3,13 @@ uploads/
 
 # Config folder - sensitive configuration files
 config/
+# But allow config template and documentation files
+!config/*.example
+!config/*.template
+!config/README.md
+
+# Specifically ignore database.php (even if config/ is already ignored)
+config/database.php
 
 # Environment files
 .env

@@ -13,6 +13,10 @@ php_value memory_limit -1
 RewriteCond %{REQUEST_URI} ^/dhama/?$
 RewriteRule ^$ admin/login.php [L]
 
+# Ensure uploads folder files are served directly (bypass rewrite rules)
+RewriteCond %{REQUEST_URI} ^/dhama/uploads/
+RewriteRule ^uploads/(.*)$ - [L]
+
 # API routing
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
